@@ -1,0 +1,22 @@
+services:
+  pizza-express:
+    image: pizza-express:latest
+    build: .
+    environment:
+      - REDIS_HOST=redis
+    ports:
+      - "8081:3000"
+    links:
+      - redis
+    networks:
+      - default
+
+  redis:
+    image: redis:6.2.2-alpine3.13
+    networks:
+      - default
+    ports:
+      - "6379:6379"
+
+networks:
+  default:
