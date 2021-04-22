@@ -1,14 +1,14 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "pizza-express.fullname" . }}
+  name: {{ include "redis.fullname" . }}
   labels:
-    {{- include "pizza-express.labels" . | nindent 4 }}
+    {{- include "redis.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "pizza-express.selectorLabels" . | nindent 6 }}
+      {{- include "redis.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -16,7 +16,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "pizza-express.selectorLabels" . | nindent 8 }}
+        {{- include "redis.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -30,21 +30,20 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          env:
-            - name: REDIS_HOST
-              value: "redis"
           ports:
             - name: http
-              containerPort: 3000
+              containerPort: 6379
               protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 3000
           readinessProbe:
-            httpGet:
-              path: /
-              port: 3000
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 15
+            periodSeconds: 20
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
